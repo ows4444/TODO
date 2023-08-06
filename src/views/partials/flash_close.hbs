@@ -1,0 +1,7 @@
+<script type='text/javascript'>
+  var alertElement = document.getElementById('alert'); 
+  function closeAlert() { alertElement.style.display = 'none';
+    alertElement.parentNode.removeChild(alertElement);
+   }
+  setTimeout(closeAlert, {{ms}});
+</script>

@@ -1,27 +1,19 @@
-import { Body, Controller, Get, Inject, Post, Req, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { AuthLoginDto, AuthRegisterDto } from './auth-dto.class';
 import { IsAuthPresenter } from './auth.presenter';
-import { UsecasesProxyModule } from 'src/infrastructure/usecases-proxy/usecases-proxy.module';
-import { UseCaseProxy } from 'src/infrastructure/usecases-proxy/usecases-proxy';
-import { LoginUseCases } from 'src/usecases/auth/login.usecases';
-import { LoginGuard } from 'src/infrastructure/common/guards/login.guard';
-import { RegisterUseCases } from 'src/usecases/auth/register.usecases';
-import { ExceptionsService } from 'src/infrastructure/exceptions/exceptions.service';
-import { User } from 'src/infrastructure/common/decorators/user.decorator';
-import { UserModel } from 'src/domain/model/user';
-import { JwtAuthGuard } from 'src/infrastructure/common/guards/jwtAuth.guard';
-
-// import JwtRefreshGuard from '../../common/guards/jwtRefresh.guard';
-// import { JwtAuthGuard } from '../../common/guards/jwtAuth.guard';
-// import { LoginGuard } from '../../common/guards/login.guard';
-
-// import { UseCaseProxy } from '../../usecases-proxy/usecases-proxy';
-// import { UsecasesProxyModule } from '../../usecases-proxy/usecases-proxy.module';
-// import { LoginUseCases } from '../../../usecases/auth/login.usecases';
-// import { IsAuthenticatedUseCases } from '../../../usecases/auth/isAuthenticated.usecases';
-// import { LogoutUseCases } from '../../../usecases/auth/logout.usecases';
+import { UsecasesProxyModule } from '@/infrastructure/usecases-proxy/usecases-proxy.module';
+import { UseCaseProxy } from '@/infrastructure/usecases-proxy/usecases-proxy';
+import { LoginUseCases } from '@/usecases/auth/login.usecases';
+import { LoginGuard } from '@/infrastructure/common/guards/login.guard';
+import { RegisterUseCases } from '@/usecases/auth/register.usecases';
+import { ExceptionsService } from '@/infrastructure/exceptions/exceptions.service';
+import { User } from '@/infrastructure/common/decorators/user.decorator';
+import { UserModel } from '@/domain/model/user';
+import { JwtAuthGuard } from '@/infrastructure/common/guards/jwtAuth.guard';
+import { LogoutUseCases } from '@/usecases/auth/logout.usecases';
+import JwtRefreshGuard from '@/infrastructure/common/guards/jwtRefresh.guard';
 
 // import { ApiResponseType } from '../../common/swagger/response.decorator';
 
@@ -35,10 +27,9 @@ import { JwtAuthGuard } from 'src/infrastructure/common/guards/jwtAuth.guard';
 @ApiExtraModels(IsAuthPresenter)
 export class AuthController {
   constructor(
-    @Inject(UsecasesProxyModule.LOGIN_USECASES_PROXY)
-    private readonly loginUsecaseProxy: UseCaseProxy<LoginUseCases>,
-    @Inject(UsecasesProxyModule.REGISTER_USECASES_PROXY)
-    private readonly registerUseCaseProxy: UseCaseProxy<RegisterUseCases>,
+    @Inject(UsecasesProxyModule.LOGIN_USECASES_PROXY) private readonly loginUsecaseProxy: UseCaseProxy<LoginUseCases>,
+    @Inject(UsecasesProxyModule.REGISTER_USECASES_PROXY) private readonly registerUseCaseProxy: UseCaseProxy<RegisterUseCases>,
+    @Inject(UsecasesProxyModule.LOGOUT_USECASES_PROXY) private readonly logoutUseCaseProxy: UseCaseProxy<LogoutUseCases>,
     private readonly exceptionsService: ExceptionsService,
   ) {}
 
@@ -64,11 +55,22 @@ export class AuthController {
     } else this.exceptionsService.conflictException({ message: `${body.username} already Exists` });
   }
 
+  @Get('refresh')
+  @UseGuards(JwtRefreshGuard)
+  @ApiBearerAuth()
+  async refresh(@User() user: UserModel) {
+    const accessToken = await this.loginUsecaseProxy.getInstance().generateAccessToken(user.username);
+    const refreshToken = await this.loginUsecaseProxy.getInstance().generateRefreshToken(user.username);
+
+    return { accessToken, refreshToken };
+  }
+
   @Get('logout')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ description: 'logout' })
-  async logout(@Request() request: any) {
-    return 'Logout successful';
+  async logout(@User() user: UserModel) {
+    await this.logoutUseCaseProxy.getInstance().deleteRefreshAndAccessToken(user.username);
+    return ` ${user.username} Logout successful`;
   }
 
   /*

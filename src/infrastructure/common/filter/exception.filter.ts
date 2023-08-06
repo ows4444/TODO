@@ -20,18 +20,21 @@ export class AllExceptionFilter implements ExceptionFilter {
         ? (exception.getResponse() as IError)
         : { message: (exception as Error).message, code_error: null };
 
-    const responseData = {
-      ...{
-        statusCode: status,
-        // timestamp: new Date().toISOString(),
-        // path: request.url,
-      },
-      ...message,
-    };
+    const responseData = Object.assign({ statusCode: status }, message);
 
     this.logMessage(request, message, status, exception);
+    const isV1ApiRoute = request.path.startsWith('/api/v1');
 
-    response.status(status).json(responseData);
+    if (!isV1ApiRoute) {
+      request.flash('danger', message.message);
+      if (status === 401 && request.path !== '/login') {
+        request.flash('danger', 'You must login to access this page');
+        response.redirect('/login');
+      } else if (status === 500) {
+      } else response.redirect(request.path);
+    } else {
+      response.status(status).json(responseData);
+    }
   }
 
   private logMessage(request: any, message: IError, status: number, exception: any) {

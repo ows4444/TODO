@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { JwtModule as Jwt } from '@nestjs/jwt';
 import { JwtTokenService } from './jwt.service';
-import { EnvironmentConfigModule } from 'src/infrastructure/config/environment/environment-config.module';
-import { EnvironmentConfigService } from 'src/infrastructure/config/environment/environment-config.service';
+import { EnvironmentConfigModule } from '@/infrastructure/config/environment/environment-config.module';
+import { EnvironmentConfigService } from '@/infrastructure/config/environment/environment-config.service';
 
 @Module({
   imports: [

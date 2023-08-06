@@ -12,6 +12,9 @@ export class DatabaseUserRepository implements UserRepository {
     @InjectModel(User.name)
     private userSchemaRepository: Model<User>,
   ) {}
+  async deleteRefreshAndAccessToken(username: string): Promise<void> {
+    await this.userSchemaRepository.updateOne({ username: username }, { $unset: { refresh_token: 1, access_token: 1 } });
+  }
   async updateAccessToken(username: string, accessToken: string): Promise<void> {
     await this.userSchemaRepository.updateOne({ username: username }, { access_token: accessToken });
   }
@@ -48,6 +51,9 @@ export class DatabaseUserRepository implements UserRepository {
     adminUser.id = userEntity._id.toString();
     adminUser.username = userEntity.username;
     adminUser.password = userEntity.password;
+
+    adminUser.refreshToken = userEntity.refresh_token;
+    adminUser.accessToken = userEntity.access_token;
 
     return adminUser;
   }

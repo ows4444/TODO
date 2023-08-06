@@ -7,6 +7,7 @@ import { UseCaseProxy } from '../../usecases-proxy/usecases-proxy';
 import { LoginUseCases } from '../../../usecases/auth/login.usecases';
 import { ExceptionsService } from '../../exceptions/exceptions.service';
 import { LoggerService } from '../../logger/logger.service';
+import { TokenPayload } from '@/domain/model/auth';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -22,11 +23,16 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  async validate(payload: any) {
-    const user = this.loginUsecaseProxy.getInstance().validateUserForJWTStrategy(payload.username);
+  async validate(payload: TokenPayload) {
+    const user = await this.loginUsecaseProxy.getInstance().validateUserForJWTStrategy(payload.username);
     if (!user) {
       this.logger.warn('JwtStrategy', `User not found`);
       this.exceptionService.unauthorizedException({ message: 'User not found' });
+    }
+
+    if (user.accessToken !== payload.id) {
+      this.logger.warn('JwtStrategy', `Invalid token`);
+      this.exceptionService.unauthorizedException({ message: 'Invalid token' });
     }
     return user;
   }

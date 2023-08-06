@@ -19,9 +19,17 @@ export class ResponseFormat<T> {
 @Injectable()
 export class ResponseInterceptor<T> implements NestInterceptor<T, ResponseFormat<T>> {
   intercept(context: ExecutionContext, next: CallHandler): Observable<ResponseFormat<T>> {
-    const now = Date.now();
+    //const now = Date.now();
     const httpContext = context.switchToHttp();
     const request = httpContext.getRequest();
+
+    // Check if the request path starts with "api/v1"
+    const isV1ApiRoute = request.path.startsWith('api/v1');
+
+    if (!isV1ApiRoute) {
+      // If the request path does not start with "api/v1", return the response data as-is
+      return next.handle();
+    }
 
     return next.handle().pipe(
       map((data) => ({

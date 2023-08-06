@@ -1,0 +1,31 @@
+<html lang='en'>
+{{>header title='Home' }}
+
+<body>
+
+  {{#if flash}}
+  {{#each flash}}
+  {{>flash flash=.}}
+  {{/each}}
+  {{/if}}
+
+
+  <div class='container mt-5'>
+    <div class='row'>
+      <div class='col'>
+        <h1>Logout</h1>
+        <p>Are you sure you want to logout?</p>
+        <form method='post' action='/logout'>
+          <button type='submit' class='btn btn-primary'>Logout</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</body>
+
+
+{{#if flash}}
+{{>flash_close ms=200000 }}
+{{/if}}
+
+</html>

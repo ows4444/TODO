@@ -20,8 +20,8 @@ export class LoginUseCases {
       const match = await this.bcryptService.compare(pass, user.password);
       if (user && match) {
         await this.updateLoginTime(user.username);
-        const { password, ...result } = user;
-        return result;
+        delete user.password;
+        return user;
       }
     }
     return null;
